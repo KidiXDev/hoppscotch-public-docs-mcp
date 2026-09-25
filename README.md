@@ -2,22 +2,35 @@
 
 A read-only MCP server for [published Hoppscotch API documentation](https://docs.hoppscotch.io/documentation/features/documentation). Search requests, inspect endpoint details, and read saved response examples. It uses Hoppscotch's public documentation endpoint; no Hoppscotch account or token is required.
 
-## Install
+## Installation
 
-Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/getting-started/installation/). From a checkout:
+### Option 1: Ask your AI agent
 
-```bash
-uv tool install .
-hoppscotch-public-docs-mcp --check https://api-docs.hoppscotch.io/view/YOUR_DOC_ID
+Copy this prompt and paste it into the AI agent you use (Codex, Claude, Antigravity, Copilot, or another MCP-capable agent):
+
+```text
+Install the Hoppscotch Public Docs MCP server for this AI client from https://github.com/KidiXDev/hoppscotch-public-docs-mcp.
+Follow the repository's README to install it with uv and configure this client. Install uv first if needed.
+Do not set a default Hoppscotch document URL. I will give you a published URL for each project; pass it as doc_url on every tool call.
+Verify that the server exposes get_document, search_documentation, list_endpoints, and get_endpoint.
+Tell me what you configured and whether I need to restart the client.
 ```
 
-Replace `YOUR_DOC_ID` with the ID in your published Hoppscotch URL. The check prints its title and endpoint count. Install directly from GitHub:
+### Option 2: Install manually
+
+Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/getting-started/installation/). Install directly from GitHub:
 
 ```bash
 uv tool install git+https://github.com/KidiXDev/hoppscotch-public-docs-mcp.git
 ```
 
-If the command is not found after installation, run `uv tool update-shell`, reopen your terminal, or use the executable's absolute path in your MCP client.
+Or install from a checkout:
+
+```bash
+uv tool install .
+```
+
+Then [configure your MCP client](#manual-mcp-client-setup), or use [Docker](#docker). To check a published document, run `hoppscotch-public-docs-mcp --check https://api-docs.hoppscotch.io/view/YOUR_DOC_ID`; replace `YOUR_DOC_ID` with your document ID. If the command is not found after installation, run `uv tool update-shell`, reopen your terminal, or use the executable's absolute path in your MCP client.
 
 ## Choose a document per call
 
@@ -47,9 +60,9 @@ Example agent instruction: “Build a product page. Search the Hoppscotch docs f
 
 The server omits saved auth values and redacts credential-like header and parameter values. Descriptions and request and response bodies are returned as published, so review the source document before sharing its contents.
 
-## MCP client setup
+## Manual MCP client setup
 
-Install the command above first. These configurations start a **stdio** server without selecting a project. Give your agent the published URL for the project you are working on; it passes that URL as `doc_url` when calling tools. The server normally prints nothing in a terminal because it exchanges protocol messages over stdin/stdout.
+After manual installation, use the configuration for your client below. These configurations start a **stdio** server without selecting a project. Give your agent the published URL for the project you are working on; it passes that URL as `doc_url` when calling tools. The server normally prints nothing in a terminal because it exchanges protocol messages over stdin/stdout.
 
 ### Codex
 
