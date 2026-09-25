@@ -138,6 +138,12 @@ The CLI also accepts a portable `~/.copilot/mcp-config.json` with a top-level `m
 
 ## Docker
 
+The image is published at `ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest`. Pull it with:
+
+```bash
+docker pull ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest
+```
+
 Build locally:
 
 ```bash
