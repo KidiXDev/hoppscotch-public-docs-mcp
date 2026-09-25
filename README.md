@@ -36,12 +36,15 @@ For a self-hosted deployment using the same `/v1/published-docs` route, set both
 | Tool | What it returns |
 | --- | --- |
 | `get_document(doc_url="")` | Title, version, folder names, environment variable names, and endpoint count |
-| `list_endpoints(query="", doc_url="", offset=0, limit=50)` | Matching requests by folder, name, method, URL, or description; up to 100 per page |
+| `search_documentation(query, doc_url="", offset=0, limit=10)` | Ranked, short endpoint summaries for API concepts in a task; up to 50 per page |
+| `list_endpoints(query="", doc_url="", offset=0, limit=50)` | Exact text matches by folder, name, method, URL, or description; up to 100 per page |
 | `get_endpoint(request_id, doc_url="", response_name="")` | Request details and available response names; the named saved response when requested |
 
-For example, search for `activity-log`, then pass a returned request ID to `get_endpoint`. To read its sample response, pass one of the returned `response_names` as `response_name`.
+For a broad coding task, the agent can search focused concepts such as `product` and `tenant` with `search_documentation`. It returns brief summaries, IDs, `total`, and `next_offset` so the agent can page through all matches without loading the entire document into context. The search uses keyword ranking, not semantic understanding. The agent should then call `get_endpoint` only for relevant IDs. To read a sample response, pass one of its `response_names` as `response_name`.
 
-The server omits saved auth values and redacts credential-like header and parameter values. Request and response bodies are returned as published, so review the source document before sharing its contents.
+Example agent instruction: “Build a product page. Search the Hoppscotch docs for product and tenant endpoints, page through all matches, inspect the routes and response examples needed for the page, and use those API details in the implementation.” The MCP reads published documentation; it does not fetch live product or tenant records.
+
+The server omits saved auth values and redacts credential-like header and parameter values. Descriptions and request and response bodies are returned as published, so review the source document before sharing its contents.
 
 ## MCP client setup
 

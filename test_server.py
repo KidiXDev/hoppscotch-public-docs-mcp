@@ -47,6 +47,31 @@ class ServerTest(unittest.TestCase):
             with self.assertRaises(server.ToolError):
                 server.get_endpoint("req1", response_name="Missing")
 
+    def test_compact_search_for_broad_tasks(self):
+        tree = {"requests": [
+            {"id": "product", "name": "List products", "method": "GET", "endpoint": "/products"},
+            {"id": "tenant-list", "name": "List tenants", "method": "GET",
+             "endpoint": "/tenants", "description": "All tenants and their settings " * 20},
+            {"id": "tenant-one", "name": "Get tenant", "method": "GET",
+             "endpoint": "/tenants/{id}", "body": {"body": "sensitive sample"}},
+            {"id": "account", "name": "Account lookup", "method": "GET",
+             "endpoint": "/accounts", "responses": {"OK": {"body": '{"tenantId": "abc"}'}}},
+        ]}
+        with patch.object(server, "_load", return_value=(DOC, tree)):
+            result = server.search_documentation(
+                "create complete product page, use all tenant to get tenant data", limit=1)
+            self.assertEqual(result["total"], 4)
+            self.assertEqual(result["endpoints"][0]["id"], "tenant-list")
+            self.assertEqual(result["next_offset"], 1)
+            self.assertLessEqual(len(result["endpoints"][0]["description"]), 180)
+            self.assertNotIn("sensitive sample", str(result))
+            self.assertEqual(server.search_documentation("tenant", offset=2)["endpoints"][0]["id"],
+                             "account")
+            with self.assertRaises(server.ToolError):
+                server.search_documentation("make a page")
+            with self.assertRaises(server.ToolError):
+                server.search_documentation("tenant", limit=51)
+
 
 if __name__ == "__main__":
     unittest.main()

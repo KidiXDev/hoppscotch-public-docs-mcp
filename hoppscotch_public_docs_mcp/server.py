@@ -17,6 +17,11 @@ DEFAULT_API_BASE = "https://api.hoppscotch.io/v1"
 SLUG = re.compile(r"[A-Za-z0-9_-]+\Z")
 VERSION = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 SECRET = re.compile(r"authorization|cookie|password|secret|token|api[-_]?key", re.I)
+QUERY_STOPWORDS = {
+    "a", "all", "an", "and", "api", "build", "complete", "create", "data",
+    "display", "endpoint", "endpoints", "for", "from", "get", "make", "need",
+    "page", "show", "the", "to", "use", "using", "with",
+}
 
 mcp = MCPServer("Hoppscotch Public Docs")
 
@@ -81,6 +86,11 @@ def _safe_rows(rows: list[dict]) -> list[dict]:
     ]
 
 
+def _short(value: object, limit: int) -> str:
+    text = " ".join(str(value or "").split())
+    return text if len(text) <= limit else text[:limit - 1] + "…"
+
+
 @mcp.tool()
 def get_document(doc_url: str = "") -> dict:
     """Get a published document's title, versions, folders, variables, and endpoint count."""
@@ -98,7 +108,7 @@ def get_document(doc_url: str = "") -> dict:
 
 @mcp.tool()
 def list_endpoints(query: str = "", doc_url: str = "", offset: int = 0, limit: int = 50) -> dict:
-    """Search endpoints in a published Hoppscotch document. Use returned IDs with get_endpoint."""
+    """List endpoints using an exact text fragment, or list all with query="". Paginate for all results."""
     if offset < 0 or not 1 <= limit <= 100:
         raise ToolError("offset must be nonnegative and limit must be between 1 and 100")
     doc, tree = _load(doc_url)
@@ -115,8 +125,42 @@ def list_endpoints(query: str = "", doc_url: str = "", offset: int = 0, limit: i
 
 
 @mcp.tool()
+def search_documentation(query: str, doc_url: str = "", offset: int = 0, limit: int = 10) -> dict:
+    """Start here for broad tasks: rank endpoints by API concepts in a phrase. Returns short summaries and IDs, not full docs. Search focused concepts (e.g. tenant), paginate when the user asks for all, then use get_endpoint for needed routes. This reads documentation, not live API data."""
+    if offset < 0 or not 1 <= limit <= 50:
+        raise ToolError("offset must be nonnegative and limit must be between 1 and 50")
+    terms = [word for word in re.findall(r"[a-z0-9_]+", query.casefold())
+             if len(word) > 2 and word not in QUERY_STOPWORDS]
+    if not terms:
+        raise ToolError("query needs an API concept, such as tenant or billing")
+    doc, tree = _load(doc_url)
+    matches = []
+    for folder, item in _requests(tree):
+        primary = " ".join(str(item.get(key) or "") for key in ("name", "endpoint")) + " " + folder
+        description = str(item.get("description") or "")
+        details = " ".join(str(item.get(key) or "") for key in
+                           ("params", "headers", "body", "responses"))
+        primary, description, details = (value.casefold() for value in (primary, description, details))
+        score = sum(4 * (term in primary) + 2 * (term in description) + (term in details)
+                    for term in terms)
+        if score:
+            matches.append((score, {
+                "id": item["id"], "folder": _short(folder, 100),
+                "name": _short(item.get("name"), 100), "method": item.get("method"),
+                "endpoint": _short(item.get("endpoint"), 160),
+                "description": _short(item.get("description"), 180),
+            }))
+    matches.sort(key=lambda match: -match[0])
+    end = offset + limit
+    return {"title": doc["title"], "url": doc.get("url"), "version": doc["version"],
+            "total": len(matches), "offset": offset,
+            "next_offset": end if end < len(matches) else None,
+            "endpoints": [item for _, item in matches[offset:end]]}
+
+
+@mcp.tool()
 def get_endpoint(request_id: str, doc_url: str = "", response_name: str = "") -> dict:
-    """Get one endpoint's request documentation. Pass response_name to include a saved response example."""
+    """Get full request details for an ID from search_documentation or list_endpoints. Pass response_name for a saved response example. Call only for relevant routes to keep context small."""
     doc, tree = _load(doc_url)
     for folder, item in _requests(tree):
         if item.get("id") != request_id:
