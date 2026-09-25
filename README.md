@@ -19,13 +19,14 @@ uv tool install git+https://github.com/KidiXDev/hoppscotch-public-docs-mcp.git
 
 If the command is not found after installation, run `uv tool update-shell`, reopen your terminal, or use the executable's absolute path in your MCP client.
 
-## Configure a document
+## Choose a document per call
 
-Set `HOPPSCOTCH_DOC_URL` to a published `/view/<slug>` URL, optionally ending in a version. Every tool also accepts `doc_url` to use a different document for one call. Without either, the tool returns a clear error. This keeps the server usable with multiple public documents rather than a built-in sample.
+Start the server without a document URL. Pass the project's published `/view/<slug>` URL as `doc_url` on each tool call, optionally ending in a version. For example, call `search_documentation(query="tenant", doc_url="https://api-docs.hoppscotch.io/view/YOUR_DOC_ID")`. Include the relevant URL in your request to the agent so it can pass the right URL for each project. Without a document URL, a tool call returns an error.
+
+For compatible self-hosted deployments, these optional settings change where the server reads published docs:
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `HOPPSCOTCH_DOC_URL` | Default published document | None |
 | `HOPPSCOTCH_DOCS_ORIGIN` | Allowed public viewer origin | `https://api-docs.hoppscotch.io` |
 | `HOPPSCOTCH_API_BASE_URL` | Backend base URL for compatible self-hosted deployments | `https://api.hoppscotch.io/v1` |
 
@@ -48,7 +49,7 @@ The server omits saved auth values and redacts credential-like header and parame
 
 ## MCP client setup
 
-Install the command above first. Replace the example URL with your published document URL. The command starts a **stdio** server, so it normally prints nothing in a terminal; your MCP client launches it and exchanges protocol messages over stdin/stdout.
+Install the command above first. These configurations start a **stdio** server without selecting a project. Give your agent the published URL for the project you are working on; it passes that URL as `doc_url` when calling tools. The server normally prints nothing in a terminal because it exchanges protocol messages over stdin/stdout.
 
 ### Codex
 
@@ -57,9 +58,6 @@ Add this to `~/.codex/config.toml` (or a project `.codex/config.toml`):
 ```toml
 [mcp_servers.hoppscotch_docs]
 command = "hoppscotch-public-docs-mcp"
-
-[mcp_servers.hoppscotch_docs.env]
-HOPPSCOTCH_DOC_URL = "https://api-docs.hoppscotch.io/view/YOUR_DOC_ID"
 ```
 
 Run `codex mcp list` to verify it. See the [Codex MCP guide](https://developers.openai.com/codex/mcp).
@@ -67,7 +65,7 @@ Run `codex mcp list` to verify it. See the [Codex MCP guide](https://developers.
 ### Claude Code
 
 ```bash
-claude mcp add --scope user --env HOPPSCOTCH_DOC_URL=https://api-docs.hoppscotch.io/view/YOUR_DOC_ID --transport stdio hoppscotch-docs -- hoppscotch-public-docs-mcp
+claude mcp add --scope user --transport stdio hoppscotch-docs -- hoppscotch-public-docs-mcp
 claude mcp get hoppscotch-docs
 ```
 
@@ -79,10 +77,7 @@ For **Claude Desktop**, edit `~/Library/Application Support/Claude/claude_deskto
 {
   "mcpServers": {
     "hoppscotch-docs": {
-      "command": "hoppscotch-public-docs-mcp",
-      "env": {
-        "HOPPSCOTCH_DOC_URL": "https://api-docs.hoppscotch.io/view/YOUR_DOC_ID"
-      }
+      "command": "hoppscotch-public-docs-mcp"
     }
   }
 }
@@ -98,10 +93,7 @@ In the IDE, open **MCP Servers → Manage MCP Servers → View raw config**. In 
 {
   "mcpServers": {
     "hoppscotch-docs": {
-      "command": "hoppscotch-public-docs-mcp",
-      "env": {
-        "HOPPSCOTCH_DOC_URL": "https://api-docs.hoppscotch.io/view/YOUR_DOC_ID"
-      }
+      "command": "hoppscotch-public-docs-mcp"
     }
   }
 }
@@ -118,10 +110,7 @@ For Copilot in VS Code, create `.vscode/mcp.json` in your project (or use **MCP:
   "servers": {
     "hoppscotch-docs": {
       "type": "stdio",
-      "command": "hoppscotch-public-docs-mcp",
-      "env": {
-        "HOPPSCOTCH_DOC_URL": "https://api-docs.hoppscotch.io/view/YOUR_DOC_ID"
-      }
+      "command": "hoppscotch-public-docs-mcp"
     }
   }
 }
@@ -130,7 +119,7 @@ For Copilot in VS Code, create `.vscode/mcp.json` in your project (or use **MCP:
 Use Copilot Chat **Agent** mode and enable the server in its tools picker. For Copilot CLI:
 
 ```bash
-copilot mcp add hoppscotch-docs --env HOPPSCOTCH_DOC_URL=https://api-docs.hoppscotch.io/view/YOUR_DOC_ID -- hoppscotch-public-docs-mcp
+copilot mcp add hoppscotch-docs -- hoppscotch-public-docs-mcp
 copilot mcp get hoppscotch-docs
 ```
 
@@ -156,7 +145,7 @@ Check a public document:
 docker run --rm hoppscotch-public-docs-mcp --check https://api-docs.hoppscotch.io/view/YOUR_DOC_ID
 ```
 
-For an MCP client's **stdio** configuration, use command `docker` and args `run`, `--rm`, `-i`, `-e`, `HOPPSCOTCH_DOC_URL=YOUR_URL`, `hoppscotch-public-docs-mcp`. Keep `-i` and do not detach the container.
+For an MCP client's **stdio** configuration, use command `docker` and args `run`, `--rm`, `-i`, `hoppscotch-public-docs-mcp`. Keep `-i` and do not detach the container. Pass the project URL as `doc_url` on each tool call.
 
 To run an HTTP server locally instead:
 
@@ -164,7 +153,7 @@ To run an HTTP server locally instead:
 docker run --rm -p 127.0.0.1:8000:8000 hoppscotch-public-docs-mcp --http --host 0.0.0.0
 ```
 
-Connect a Streamable HTTP MCP client to `http://127.0.0.1:8000/mcp`. Pass `doc_url` to tools or add `-e HOPPSCOTCH_DOC_URL=YOUR_URL` to the Docker command. For a local Python process, use `hoppscotch-public-docs-mcp --http` instead.
+Connect a Streamable HTTP MCP client to `http://127.0.0.1:8000/mcp` and pass `doc_url` to each tool. For a local Python process, use `hoppscotch-public-docs-mcp --http` instead.
 
 ## Develop
 
