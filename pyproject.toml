@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hoppscotch-public-docs-mcp"
+version = "0.1.0"
+description = "Read published Hoppscotch API documentation through MCP"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["mcp>=2,<3"]
+keywords = ["hoppscotch", "mcp", "api-documentation"]
+
+[project.urls]
+Repository = "https://github.com/KidiXDev/hoppscotch-public-docs-mcp"
+Issues = "https://github.com/KidiXDev/hoppscotch-public-docs-mcp/issues"
+
+[project.scripts]
+hoppscotch-public-docs-mcp = "hoppscotch_public_docs_mcp.server:main"
+
+[tool.setuptools.packages.find]
+include = ["hoppscotch_public_docs_mcp*"]
