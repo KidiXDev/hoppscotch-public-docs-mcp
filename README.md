@@ -4,21 +4,55 @@ A read-only MCP server for [published Hoppscotch API documentation](https://docs
 
 ## Installation
 
-### Option 1: Ask your AI agent
+### For Agents
 
-Copy this prompt and paste it into the AI agent you use (Codex, Claude, Antigravity, Copilot, or another MCP-capable agent):
+Copy one of these prompts into your MCP-capable AI agent.
+
+#### Using uv
 
 ```text
 Install the Hoppscotch Public Docs MCP server for this AI client from https://github.com/KidiXDev/hoppscotch-public-docs-mcp.
-Follow the repository's README to install it with uv and configure this client. Install uv first if needed.
-Do not set a default Hoppscotch document URL. I will give you a published URL for each project; pass it as doc_url on every tool call.
+
+Follow the repository README and install it using uv:
+uv tool install git+https://github.com/KidiXDev/hoppscotch-public-docs-mcp.git
+
+Install uv first if needed, then configure this client to run:
+hoppscotch-public-docs-mcp
+
+Do not set a default Hoppscotch document URL. I will provide a published URL for each project; pass it as doc_url on every tool call.
+
 Verify that the server exposes get_document, search_documentation, list_endpoints, and get_endpoint.
+
 Tell me what you configured and whether I need to restart the client.
 ```
 
-### Option 2: Install manually
+#### Using Docker
 
-Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/getting-started/installation/). Install directly from GitHub:
+```text
+Install the Hoppscotch Public Docs MCP server for this AI client from https://github.com/KidiXDev/hoppscotch-public-docs-mcp.
+
+Use the prebuilt Docker image:
+ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest
+
+Pull the image if needed, then configure this client to run the MCP server over stdio using:
+docker run --rm -i ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest
+
+Do not build the image locally unless necessary.
+
+Do not set a default Hoppscotch document URL. I will provide a published URL for each project; pass it as doc_url on every tool call.
+
+Verify that the server exposes get_document, search_documentation, list_endpoints, and get_endpoint.
+
+Tell me what you configured and whether I need to restart the client.
+```
+
+### For Humans
+
+#### Using uv
+
+Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+Install directly from GitHub:
 
 ```bash
 uv tool install git+https://github.com/KidiXDev/hoppscotch-public-docs-mcp.git
@@ -30,7 +64,45 @@ Or install from a checkout:
 uv tool install .
 ```
 
-Then [configure your MCP client](#manual-mcp-client-setup), or use [Docker](#docker). To check a published document, run `hoppscotch-public-docs-mcp --check https://api-docs.hoppscotch.io/view/YOUR_DOC_ID`; replace `YOUR_DOC_ID` with your document ID. If the command is not found after installation, run `uv tool update-shell`, reopen your terminal, or use the executable's absolute path in your MCP client.
+Then [configure your MCP client](#manual-mcp-client-setup).
+
+To check a published document:
+
+```bash
+hoppscotch-public-docs-mcp --check https://api-docs.hoppscotch.io/view/YOUR_DOC_ID
+```
+
+If the command is not found after installation, run `uv tool update-shell`, reopen your terminal, or use the executable's absolute path in your MCP client.
+
+#### Using Docker
+
+Pull the prebuilt image:
+
+```bash
+docker pull ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest
+```
+
+For an MCP client's stdio configuration, run:
+
+```bash
+docker run --rm -i ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest
+```
+
+Keep `-i` and do not detach the container.
+
+To check a published document:
+
+```bash
+docker run --rm \
+  ghcr.io/kidixdev/hoppscotch-public-docs-mcp:latest \
+  --check https://api-docs.hoppscotch.io/view/YOUR_DOC_ID
+```
+
+For local development, you can still build the image yourself:
+
+```bash
+docker build -t hoppscotch-public-docs-mcp .
+```
 
 ## Choose a document per call
 
