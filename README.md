@@ -1,4 +1,5 @@
 # Hoppscotch Public Docs MCP
+> **This project has moved to [public-api-docs-mcp](https://github.com/KidiXDev/public-api-docs-mcp)**, which also supports Postman. This repository is no longer maintained.
 
 A read-only MCP server for [published Hoppscotch API documentation](https://docs.hoppscotch.io/documentation/features/documentation). Search requests, inspect endpoint details, and read saved response examples. It uses Hoppscotch's public documentation endpoint; no Hoppscotch account or token is required.
 
